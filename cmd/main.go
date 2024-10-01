@@ -1,50 +1,23 @@
 package main
 
 import (
+	"context"
 	"log"
-	"os"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/BelyaevEI/tg-zametker/internal/app"
 )
 
 func main() {
-	// Получаем токен бота из переменной окружения
-	token := os.Getenv("TELEGRAM_BOT_TOKEN")
-	if token == "" {
-		log.Fatal("Не удалось получить токен бота. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
-	}
 
-	// Создаем нового бота с указанным токеном
-	bot, err := tgbotapi.NewBotAPI(token)
+	ctx := context.Background()
+
+	app, err := app.NewApp(ctx)
 	if err != nil {
-		log.Panic(err)
+		log.Fatalf("failed to init app: %s", err.Error())
 	}
 
-	// Устанавливаем отладочный режим (выводим все отправленные сообщения)
-	bot.Debug = true
-
-	log.Printf("Авторизован как %s", bot.Self.UserName)
-
-	// Создаем канал для получения обновлений
-	updates, err := bot.GetUpdatesChan(tgbotapi.NewUpdate(0))
+	err = app.Run(ctx)
 	if err != nil {
-		log.Panic(err)
-	}
-
-	// Обрабатываем полученные обновления
-	for update := range updates {
-		if update.Message == nil { // игнорируем обновления, не являющиеся сообщениями
-			continue
-		}
-
-		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-		// Отвечаем на полученное сообщение
-		reply := "Получено сообщение: " + update.Message.Text
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
-		_, err := bot.Send(msg)
-		if err != nil {
-			log.Panic(err)
-		}
+		log.Fatalf("failed to run app: %s", err.Error())
 	}
 }
