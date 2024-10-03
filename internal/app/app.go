@@ -24,7 +24,6 @@ func NewApp(ctx context.Context) (*App, error) {
 	}
 
 	return a, nil
-
 }
 
 // Инициализация всех зависимостей приложения
@@ -107,32 +106,32 @@ func (a *App) Run(ctx context.Context) error {
 		if update.Message.IsCommand() { // если пришла команда
 			switch update.Message.Command() {
 			case "start":
-				// Создаем inline-кнопки
-				inlineKeyboard := tgbotapi.NewInlineKeyboardMarkup(
-					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("Кнопка 1", "data_1"),
-						tgbotapi.NewInlineKeyboardButtonData("Кнопка 2", "data_2"),
+				// Создаем reply-кнопки
+				replyKeyboard := tgbotapi.NewReplyKeyboard(
+					tgbotapi.NewKeyboardButtonRow(
+						tgbotapi.NewKeyboardButton("Кнопка 1"),
+						tgbotapi.NewKeyboardButton("Кнопка 2"),
 					),
 				)
 
-				// Отправляем сообщение с inline-кнопками
+				// Отправляем сообщение с reply-кнопками
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите опцию:")
-				msg.ReplyMarkup = inlineKeyboard
+				msg.ReplyMarkup = replyKeyboard
 
 				a.bot.Send(msg)
 			}
-		} else if update.CallbackQuery != nil { // если пришел callback от inline-кнопки
-			// Отправляем ответ на callback
-			callback := tgbotapi.NewCallback(update.CallbackQuery.ID, update.CallbackQuery.Data)
-			if _, err := a.bot.AnswerCallbackQuery(callback); err != nil {
-				log.Println("Error sending callback response:", err)
-			}
+		}
 
-			// Ответное сообщение после нажатия кнопки
-			msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Вы нажали: "+update.CallbackQuery.Data)
-			if _, err := a.bot.Send(msg); err != nil {
-				log.Println("Error sending message after callback:", err)
-			}
+		switch update.Message.Text {
+		case "Кнопка 1":
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Вы нажали Кнопка 1")
+			a.bot.Send(msg)
+		case "Кнопка 2":
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Вы нажали Кнопка 2")
+			a.bot.Send(msg)
+		default:
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Неизвестная команда")
+			a.bot.Send(msg)
 		}
 	}
 
