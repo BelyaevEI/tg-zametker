@@ -3,10 +3,15 @@ package app
 import (
 	"context"
 	"log"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 
 	"github.com/BelyaevEI/tg-zametker/internal/config"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/BelyaevEI/platform_common/pkg/closer"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type App struct {
@@ -89,51 +94,48 @@ func (a *App) Run(ctx context.Context) error {
 
 	log.Println("Bot is running...")
 
-	// Получение обновлений
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 30
+	// Gracefull shutdown
+	defer func() {
+		closer.CloseAll()
+		closer.Wait()
+	}()
 
-	updates, err := a.bot.GetUpdatesChan(u)
-	if err != nil {
-		return nil
-	}
+	ctx, cancel := context.WithCancel(ctx)
 
-	for update := range updates {
-		if update.Message == nil { // проверяем, что сообщение не пустое
-			continue
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	// Запускаем сам бот
+	go func() {
+		defer wg.Done()
+
+		err := a.UpdatesFromTGServer(ctx)
+		if err != nil {
+			log.Fatalf("get updates is failed: %s", err.Error())
 		}
 
-		if update.Message.IsCommand() { // если пришла команда
-			switch update.Message.Command() {
-			case "start":
-				// Создаем reply-кнопки
-				replyKeyboard := tgbotapi.NewReplyKeyboard(
-					tgbotapi.NewKeyboardButtonRow(
-						tgbotapi.NewKeyboardButton("Кнопка 1"),
-						tgbotapi.NewKeyboardButton("Кнопка 2"),
-					),
-				)
+	}()
 
-				// Отправляем сообщение с reply-кнопками
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите опцию:")
-				msg.ReplyMarkup = replyKeyboard
-
-				a.bot.Send(msg)
-			}
-		}
-
-		switch update.Message.Text {
-		case "Кнопка 1":
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Вы нажали Кнопка 1")
-			a.bot.Send(msg)
-		case "Кнопка 2":
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Вы нажали Кнопка 2")
-			a.bot.Send(msg)
-		default:
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Неизвестная команда")
-			a.bot.Send(msg)
-		}
-	}
-
+	gracefulShutdown(ctx, cancel, wg)
 	return nil
+}
+
+func gracefulShutdown(ctx context.Context, cancel context.CancelFunc, wg *sync.WaitGroup) {
+	select {
+	case <-ctx.Done():
+		log.Println("terminating: context cancelled")
+	case <-waitSignal():
+		log.Println("terminating: via signal")
+	}
+
+	cancel()
+	if wg != nil {
+		wg.Wait()
+	}
+}
+
+func waitSignal() chan os.Signal {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	return sig
 }
