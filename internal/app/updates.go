@@ -40,11 +40,6 @@ func (a *App) UpdatesFromTGServer(ctx context.Context) error {
 		case update := <-updates:
 			log.Printf("Update received: %+v", update) // Лог всех обновлений
 
-			if update.CallbackQuery != nil {
-				msg := a.serviceProvider.service.Callback(update)
-				a.bot.Send(msg)
-			}
-
 			if update.Message == nil {
 				continue
 			}

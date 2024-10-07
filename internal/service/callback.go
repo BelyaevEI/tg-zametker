@@ -22,8 +22,13 @@ func (s *serv) Callback(update tgbotapi.Update) tgbotapi.MessageConfig {
 		s.mu.Lock()
 		s.state[int64(update.Message.From.ID)] = "creating" // Сохраняем состояние
 		s.mu.Unlock()
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите текст для создания:")
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите текст для создания заметки:")
 		return msg
+	case "Назад":
+		s.mu.Lock()
+		s.state[int64(update.Message.From.ID)] = "back" // Сохраняем состояние
+		s.mu.Unlock()
+		return tgbotapi.MessageConfig{}
 	}
 	return tgbotapi.MessageConfig{}
 }
