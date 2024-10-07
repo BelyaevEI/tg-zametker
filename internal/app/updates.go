@@ -38,7 +38,13 @@ func (a *App) UpdatesFromTGServer(ctx context.Context) error {
 	for {
 		select {
 		case update := <-updates:
-			// проверяем, что сообщение не пустое
+			log.Printf("Update received: %+v", update) // Лог всех обновлений
+
+			if update.CallbackQuery != nil {
+				msg := a.serviceProvider.service.Callback(update)
+				a.bot.Send(msg)
+			}
+
 			if update.Message == nil {
 				continue
 			}
@@ -48,19 +54,8 @@ func (a *App) UpdatesFromTGServer(ctx context.Context) error {
 				msg := a.serviceProvider.service.Commands(update)
 				a.bot.Send(msg)
 			} else {
-				// Обработка нажатий кнопок
-				switch update.Message.Text {
-				case "Кнопка 1":
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Вы нажали кнопку 1")
-					a.bot.Send(msg)
-
-				case "Кнопка 2":
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Вы нажали кнопку 2")
-					a.bot.Send(msg)
-				default:
-					msg := a.serviceProvider.service.NotFound(update)
-					a.bot.Send(msg)
-				}
+				msg := a.serviceProvider.service.HandleText(update)
+				a.bot.Send(msg)
 			}
 
 		case <-ctx.Done():
