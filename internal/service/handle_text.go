@@ -19,6 +19,11 @@ func (s *serv) HandleText(update tgbotapi.Update) tgbotapi.MessageConfig {
 		s.mu.Unlock()
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите текст для создания:")
 		return msg
+	case "Показать заметки":
+		list, err := s.showNote(update.Message.From.ID)
+		if err != nil {
+			return tgbotapi.NewMessage(update.Message.Chat.ID, "Возникла ошибка, попробуйте снова.")
+		}
 
 	case "Назад":
 		s.mu.Lock()
@@ -29,6 +34,7 @@ func (s *serv) HandleText(update tgbotapi.Update) tgbotapi.MessageConfig {
 		return msg
 
 	default:
+
 		// Обработка следующего текстового ввода, если есть активное состояние
 		if exists {
 			msg := s.handleCommnds(update, currentState)
