@@ -16,7 +16,7 @@ type Servicer interface {
 	NotFound(update tgbotapi.Update) tgbotapi.MessageConfig
 	HandleText(update tgbotapi.Update) tgbotapi.MessageConfig
 	handleCommnds(update tgbotapi.Update, state string) tgbotapi.MessageConfig
-	showNote(userID int64) (string, error)
+	showNotes(userID int64) (string, error)
 }
 
 type serv struct {

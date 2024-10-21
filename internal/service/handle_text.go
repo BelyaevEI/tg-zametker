@@ -18,21 +18,31 @@ func (s *serv) HandleText(update tgbotapi.Update) tgbotapi.MessageConfig {
 		s.state[int64(update.Message.From.ID)] = "creating" // Сохраняем состояние
 		s.mu.Unlock()
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите текст для создания:")
+
 		return msg
 	case "Показать заметки":
-		list, err := s.showNote(update.Message.From.ID)
+		list, err := s.showNotes(update.Message.From.ID)
 		if err != nil {
 			return tgbotapi.NewMessage(update.Message.Chat.ID, "Возникла ошибка, попробуйте снова.")
 		}
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, list)
 
+		return msg
+	case "Удалить":
+		s.mu.Lock()
+		s.state[int64(update.Message.From.ID)] = "delete" // Сохраняем состояние
+		s.mu.Unlock()
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите номер заметки для удаления")
+
+		return msg
 	case "Назад":
 		s.mu.Lock()
 		delete(s.state, int64(update.Message.From.ID)) // Сбрасываем состояние
 		s.mu.Unlock()
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Вы вернулись назад.")
 		msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true) // Убираем клавиатуру
-		return msg
 
+		return msg
 	default:
 
 		// Обработка следующего текстового ввода, если есть активное состояние
@@ -42,7 +52,7 @@ func (s *serv) HandleText(update tgbotapi.Update) tgbotapi.MessageConfig {
 		}
 		// если вводится в чат текст без команды
 		msg := s.NotFound(update)
-		return msg
 
+		return msg
 	}
 }

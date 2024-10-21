@@ -10,7 +10,6 @@ func (s *serv) handleCommnds(update tgbotapi.Update, state string) tgbotapi.Mess
 
 	switch state {
 	case "creating":
-
 		err := s.repository.CreateNote(update.Message.From.ID, update.Message.Text)
 		if err != nil {
 			log.Printf("creating is failed: %v", err)
@@ -21,8 +20,21 @@ func (s *serv) handleCommnds(update tgbotapi.Update, state string) tgbotapi.Mess
 		s.mu.Lock()
 		delete(s.state, int64(update.Message.From.ID)) // Сбрасываем состояние
 		s.mu.Unlock()
+
 		return msg
-	case "":
+	case "delete":
+		err := s.repository.DeleteNote(update.Message.From.ID, update.Message.Text)
+		if err != nil {
+			log.Printf("deleting is failed: %v", err)
+			return tgbotapi.NewMessage(update.Message.Chat.ID, "При удалении возникла ошибка, попробуйте снова.")
+		}
+
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Удаление заметки успешно.")
+		s.mu.Lock()
+		delete(s.state, int64(update.Message.From.ID)) // Сбрасываем состояние
+		s.mu.Unlock()
+
+		return msg
 	}
 
 	return tgbotapi.MessageConfig{}

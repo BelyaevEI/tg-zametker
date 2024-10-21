@@ -6,7 +6,6 @@ func (s *serv) NoteMenu(update tgbotapi.Update) tgbotapi.MessageConfig {
 	// Создаем Reply Keyboard
 	replyKeyboard := tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("Показать заметки"),
 			tgbotapi.NewKeyboardButton("Создать"),
 			tgbotapi.NewKeyboardButton("Редактировать"),
 			tgbotapi.NewKeyboardButton("Удалить"),

@@ -19,7 +19,7 @@ func (r *repo) CreateNote(userID int64, note string) error {
 	}
 
 	q := db.Query{
-		Name:     "create note",
+		Name:     "create_note",
 		QueryRaw: query,
 	}
 
