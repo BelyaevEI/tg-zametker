@@ -13,11 +13,13 @@ func (r *repo) DeleteNote(userID int64, noteNum string) error {
 	if err != nil {
 		return err
 	}
+
 	indx, err := strconv.Atoi(noteNum)
 	if err != nil {
 		return err
 	}
 
+	// т.к. выводим мы с 1 все заметки а индекс в слайсах с 0
 	note := notes[indx-1]
 
 	builderDelete := sq.Delete(tableName).

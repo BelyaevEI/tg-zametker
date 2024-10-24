@@ -32,7 +32,29 @@ func (s *serv) HandleText(update tgbotapi.Update) tgbotapi.MessageConfig {
 		s.mu.Lock()
 		s.state[int64(update.Message.From.ID)] = "delete" // Сохраняем состояние
 		s.mu.Unlock()
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите номер заметки для удаления")
+
+		list, err := s.showNotes(update.Message.From.ID)
+		if err != nil {
+			return tgbotapi.NewMessage(update.Message.Chat.ID, "Возникла ошибка, попробуйте снова.")
+		}
+
+		list = "Введите номер заметки для удаления: \n" + list
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, list)
+
+		return msg
+
+	case "Редактировать":
+		s.mu.Lock()
+		s.state[int64(update.Message.From.ID)] = "input" // Сохраняем состояние
+		s.mu.Unlock()
+
+		list, err := s.showNotes(update.Message.From.ID)
+		if err != nil {
+			return tgbotapi.NewMessage(update.Message.Chat.ID, "Возникла ошибка, попробуйте снова.")
+		}
+
+		list = "Введите номер заметки для редактирования из списка ниже: \n" + list
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, list)
 
 		return msg
 	case "Назад":

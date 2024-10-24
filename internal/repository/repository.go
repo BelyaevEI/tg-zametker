@@ -14,6 +14,7 @@ type Repositorer interface {
 	CreateNote(userID int64, note string) error
 	ShowNotes(userID int64) ([]string, error)
 	DeleteNote(userID int64, note string) error
+	EditNote(userID, numberNote int64, note string) error
 }
 
 type repo struct {

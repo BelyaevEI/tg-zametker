@@ -23,6 +23,7 @@ type serv struct {
 	repository repository.Repositorer
 	state      map[int64]string // Состояние для пользователей
 	mu         sync.Mutex       // Мьютекс для безопасного доступа к состоянию
+	numberNote int64            //Запрошенный номер при редактировании
 }
 
 func NewService(repository repository.Repositorer) Servicer {
